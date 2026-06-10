@@ -185,6 +185,7 @@ body {
 .field input,
 .field select {
   width: 100%;
+  height: 38px;
   background: var(--ink);
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -266,6 +267,13 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 0.7rem;
+}
+
+/* Inputs stay bottom-aligned even when one label wraps to two lines */
+.field-grid .field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .btn {
