@@ -10,6 +10,8 @@ So I built the same procedure as a standalone tool. One Node.js app, a clean int
 
 This is the full setup guide. Follow it step by step and you'll have it running in about ten minutes.
 
+Don't want to install anything? There's a hosted version at **[indexify-gapfinder.netlify.app](https://indexify-gapfinder.netlify.app)**. It holds no API keys; you bring your own, they're sent only with your requests and never stored on the server, and you can optionally remember them in your own browser and clear them with one click. Try it in demo mode without entering anything at all.
+
 ![The Gapfinder home screen](images/01-home.png)
 
 ## What the tool actually does
@@ -36,8 +38,8 @@ No DataForSEO account yet? The tool has a built-in demo mode with sample data, s
 ## Step 1: Get the code and install
 
 ```bash
-git clone [repository link]
-cd keyword-gap-analysis
+git clone https://github.com/jongoodey/gapfinder.git
+cd gapfinder
 npm install
 ```
 
@@ -121,4 +123,4 @@ When the same answer costs six cents and thirty seconds, you check it weekly. Th
 
 ---
 
-*The tool is built on the DataForSEO Labs API with a Node.js backend and a vanilla JavaScript frontend. The imagery in the app and this article was generated with OpenAI image generation, driven by Codex. If you set it up and hit a snag, leave a comment and I'll help you debug it.*
+*The tool is built on the DataForSEO Labs API with a Node.js backend and a vanilla JavaScript frontend, and deploys to Netlify in one step (the repo includes the config). The imagery in the app and this article was generated with OpenAI image generation, driven by Codex. If you set it up and hit a snag, leave a comment and I'll help you debug it.*

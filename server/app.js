@@ -6,8 +6,6 @@ import { hasNotionCredentials, logRowsToNotion } from './notion.js';
 import { mergeCompetitorItems } from './merge.js';
 import { demoPerCompetitor } from './demo.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 function cleanDomain(input) {
   return String(input || '')
     .trim()
@@ -40,10 +38,15 @@ function resolveNotion(req) {
   return null;
 }
 
-export function createApp() {
+// serveStatic is off in the Netlify function, where the CDN serves public/
+// and import.meta.url is unavailable after CJS bundling.
+export function createApp({ serveStatic = true } = {}) {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
-  app.use(express.static(path.join(__dirname, '..', 'public')));
+  if (serveStatic) {
+    const dir = path.dirname(fileURLToPath(import.meta.url));
+    app.use(express.static(path.join(dir, '..', 'public')));
+  }
 
   app.get('/api/config', (_req, res) => {
     // Booleans only: tells the page whether the server holds keys, never the keys.
