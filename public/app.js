@@ -7,8 +7,93 @@ const state = {
   sortKey: 'opportunityScore',
   sortDir: 'desc',
   demo: false,
-  notionEnabled: false,
+  cfg: { dataForSeo: false, notion: false },
 };
+
+const KEYS_STORAGE = 'gapfinder.keys';
+
+function loadSavedKeys() {
+  try {
+    return JSON.parse(localStorage.getItem(KEYS_STORAGE)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function enteredKeys() {
+  return {
+    dataForSeoLogin: $('dfsLogin')?.value.trim() || '',
+    dataForSeoPassword: $('dfsPassword')?.value.trim() || '',
+    notionApiKey: $('notionKey')?.value.trim() || '',
+    notionDatabaseId: $('notionDb')?.value.trim() || '',
+  };
+}
+
+function dfsAvailable() {
+  if (state.cfg.dataForSeo) return true;
+  const k = enteredKeys();
+  return Boolean(k.dataForSeoLogin && k.dataForSeoPassword);
+}
+
+function notionAvailable() {
+  if (state.cfg.notion) return true;
+  const k = enteredKeys();
+  return Boolean(k.notionApiKey && k.notionDatabaseId);
+}
+
+// Only attach page-supplied credentials when the server has none of its own.
+function credentialsPayload() {
+  if (state.cfg.dataForSeo && state.cfg.notion) return undefined;
+  return enteredKeys();
+}
+
+function persistKeysIfWanted() {
+  if (!$('rememberKeys') || $('credsCard').hidden) return;
+  if ($('rememberKeys').checked) {
+    localStorage.setItem(KEYS_STORAGE, JSON.stringify(enteredKeys()));
+  } else {
+    localStorage.removeItem(KEYS_STORAGE);
+  }
+}
+
+function updateCredentialState() {
+  setChip('chipDfs', 'DataForSEO', dfsAvailable());
+  setChip('chipNotion', 'Notion', notionAvailable());
+  $('demoHint').hidden = dfsAvailable();
+  updateActions();
+}
+
+function setupCredentials() {
+  const needDfs = !state.cfg.dataForSeo;
+  const needNotion = !state.cfg.notion;
+  if (!needDfs && !needNotion) {
+    updateCredentialState();
+    return;
+  }
+  $('credsCard').hidden = false;
+  $('dfsCreds').hidden = !needDfs;
+  $('notionCreds').hidden = !needNotion;
+
+  const saved = loadSavedKeys();
+  if (saved.dataForSeoLogin) $('dfsLogin').value = saved.dataForSeoLogin;
+  if (saved.dataForSeoPassword) $('dfsPassword').value = saved.dataForSeoPassword;
+  if (saved.notionApiKey) $('notionKey').value = saved.notionApiKey;
+  if (saved.notionDatabaseId) $('notionDb').value = saved.notionDatabaseId;
+  $('rememberKeys').checked = Object.values(saved).some(Boolean);
+
+  ['dfsLogin', 'dfsPassword', 'notionKey', 'notionDb'].forEach((id) => {
+    $(id).addEventListener('input', updateCredentialState);
+  });
+  $('rememberKeys').addEventListener('change', persistKeysIfWanted);
+  $('clearKeysBtn').addEventListener('click', () => {
+    localStorage.removeItem(KEYS_STORAGE);
+    ['dfsLogin', 'dfsPassword', 'notionKey', 'notionDb'].forEach((id) => ($(id).value = ''));
+    $('rememberKeys').checked = false;
+    updateCredentialState();
+    toast('Saved keys cleared from this browser');
+  });
+  updateCredentialState();
+}
 
 const MAX_COMPETITORS = 10;
 const DEFAULT_COMPETITORS = ['edge45.co.uk', 'clickslice.co.uk'];
@@ -55,15 +140,11 @@ async function init() {
   $('addCompBtn').addEventListener('click', () => addCompetitorRow('', true));
 
   try {
-    const cfg = await (await fetch('/api/config')).json();
-    setChip('chipDfs', 'DataForSEO', cfg.dataForSeo);
-    setChip('chipNotion', 'Notion', cfg.notion);
-    state.notionEnabled = cfg.notion;
-    $('demoHint').hidden = cfg.dataForSeo;
+    state.cfg = await (await fetch('/api/config')).json();
   } catch {
-    setChip('chipDfs', 'DataForSEO', false);
-    setChip('chipNotion', 'Notion', false);
+    state.cfg = { dataForSeo: false, notion: false };
   }
+  setupCredentials();
 
   $('analyzeForm').addEventListener('submit', onAnalyze);
   $('searchBox').addEventListener('input', render);
@@ -87,7 +168,8 @@ async function init() {
 function setChip(id, label, on) {
   const el = $(id);
   el.textContent = `${label}: ${on ? 'configured' : 'not configured'}`;
-  el.classList.add(on ? 'on' : 'off');
+  el.classList.toggle('on', on);
+  el.classList.toggle('off', !on);
 }
 
 async function onAnalyze(e) {
@@ -100,7 +182,9 @@ async function onAnalyze(e) {
     limit: $('limit').value,
     minVolume: $('minVolume').value,
     maxDifficulty: $('maxDifficulty').value,
+    credentials: credentialsPayload(),
   };
+  persistKeysIfWanted();
 
   $('emptyState').hidden = true;
   $('resultsHead').hidden = true;
@@ -197,11 +281,12 @@ function render() {
 
 function updateActions() {
   const n = state.selected.size;
-  $('notionBtn').disabled = !state.notionEnabled || n === 0;
+  const notionOn = notionAvailable();
+  $('notionBtn').disabled = !notionOn || n === 0;
   $('notionBtn').textContent = n > 0 ? `Log ${n} to Notion` : 'Log to Notion';
-  $('notionBtn').title = state.notionEnabled
+  $('notionBtn').title = notionOn
     ? ''
-    : 'Add NOTION_API_KEY and NOTION_DATABASE_ID to .env to enable';
+    : 'Add your Notion API key and database ID in the connection settings to enable';
 }
 
 function selectedRows() {
@@ -238,7 +323,7 @@ async function logToNotion() {
     const res = await fetch('/api/notion/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, credentials: credentialsPayload() }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Notion logging failed');

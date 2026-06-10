@@ -4,10 +4,8 @@ export function hasDataForSeoCredentials() {
   return Boolean(process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD);
 }
 
-function authHeader() {
-  const token = Buffer.from(
-    `${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`
-  ).toString('base64');
+function authHeader({ login, password }) {
+  const token = Buffer.from(`${login}:${password}`).toString('base64');
   return `Basic ${token}`;
 }
 
@@ -26,6 +24,7 @@ function buildFilters({ minVolume, maxDifficulty }) {
 
 // Keywords the competitor (target1) ranks for that yourDomain (target2) does not.
 export async function fetchGapKeywords({
+  auth,
   competitor,
   yourDomain,
   locationName,
@@ -51,12 +50,15 @@ export async function fetchGapKeywords({
   const res = await fetch(`${API_BASE}/dataforseo_labs/google/domain_intersection/live`, {
     method: 'POST',
     headers: {
-      Authorization: authHeader(),
+      Authorization: authHeader(auth),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify([task]),
   });
 
+  if (res.status === 401) {
+    throw new Error('DataForSEO rejected the credentials (401). Check the API login and password.');
+  }
   if (!res.ok) {
     throw new Error(`DataForSEO HTTP ${res.status}: ${await res.text()}`);
   }

@@ -94,10 +94,48 @@
           <span class="btn-label">Find keyword gaps</span>
         </button>
         <p class="hint" id="demoHint" hidden>
-          No DataForSEO keys detected: results will be <strong>sample data</strong>.
-          Add keys to <code>.env</code> and restart for live analysis.
+          No DataForSEO keys yet: results will be <strong>sample data</strong>.
+          Add your keys below for live analysis.
         </p>
       </form>
+
+      <section class="card creds-card" id="credsCard" hidden>
+        <h2 class="card-title">Your API keys</h2>
+        <p class="creds-note">
+          This deployment doesn't include API keys, so you bring your own.
+          They are sent only with your requests and are <strong>never stored on the server</strong>.
+        </p>
+        <div id="dfsCreds" hidden>
+          <label class="field">
+            <span>DataForSEO API login</span>
+            <input type="text" id="dfsLogin" autocomplete="off" placeholder="you@example.com" />
+          </label>
+          <label class="field">
+            <span>DataForSEO API password</span>
+            <input type="password" id="dfsPassword" autocomplete="off" />
+          </label>
+        </div>
+        <div id="notionCreds" hidden>
+          <label class="field">
+            <span>Notion API key <small>optional</small></span>
+            <input type="password" id="notionKey" autocomplete="off" placeholder="ntn_..." />
+          </label>
+          <label class="field">
+            <span>Notion database ID <small>optional</small></span>
+            <input type="text" id="notionDb" autocomplete="off" />
+          </label>
+        </div>
+        <label class="remember">
+          <input type="checkbox" id="rememberKeys" />
+          <span>Remember these keys in this browser</span>
+        </label>
+        <p class="creds-note small">
+          Remembered keys are kept in this browser's local storage only. They never
+          leave your machine except to run your own analyses, and you can remove
+          them below at any time.
+        </p>
+        <button type="button" class="btn btn-ghost btn-clear" id="clearKeysBtn">Clear saved keys</button>
+      </section>
     </aside>
 
     <section class="results">

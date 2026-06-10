@@ -46,6 +46,34 @@ does not provide them.
 Without DataForSEO keys the app runs in **demo mode** with sample data so the
 full interface can be explored at no cost.
 
+### Key precedence (hosted mode)
+
+The server resolves credentials in this order:
+
+1. **Server environment variables** (`.env` locally, or site environment
+   variables on Netlify). When present, visitors never see key fields.
+2. **Keys supplied on the page.** When the server holds no keys, a "Your API
+   keys" panel appears and visitors bring their own. Page keys are sent only
+   with each request and are never stored server-side. Visitors can optionally
+   remember keys in their own browser (localStorage) and clear them with one
+   click.
+
+This makes the same build work as a personal tool (env keys), a free
+bring-your-own-keys deployment, or a future paid tier (your keys in the
+hosting environment).
+
+## Deploying to Netlify
+
+The repo ships with `netlify.toml` and a serverless wrapper
+(`netlify/functions/api.js`), so deployment is connect-and-go:
+
+1. Push the repo to GitHub and create a new Netlify site from it. The build
+   settings are read from `netlify.toml` (publish `public/`, functions in
+   `netlify/functions/`). No build command is needed.
+2. Optionally add `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`, `NOTION_API_KEY`
+   and `NOTION_DATABASE_ID` as site environment variables to run it with your
+   own keys; leave them unset to run it in bring-your-own-keys mode.
+
 ## Notion database
 
 A "Keyword Gap Opportunities" database already exists in the workspace

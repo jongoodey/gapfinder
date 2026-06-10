@@ -5,16 +5,15 @@ export function hasNotionCredentials() {
   return Boolean(process.env.NOTION_API_KEY && process.env.NOTION_DATABASE_ID);
 }
 
-function headers() {
-  return {
-    Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
-    'Notion-Version': NOTION_VERSION,
-    'Content-Type': 'application/json',
-  };
-}
-
-async function notionFetch(path, options = {}) {
-  const res = await fetch(`${NOTION_API}${path}`, { ...options, headers: headers() });
+async function notionFetch(path, apiKey, options = {}) {
+  const res = await fetch(`${NOTION_API}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json',
+    },
+  });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(`Notion API ${res.status}: ${data.message || JSON.stringify(data)}`);
@@ -35,8 +34,8 @@ const REQUIRED_PROPERTIES = {
 };
 
 // Adds any missing properties to the database and returns the title property name.
-async function ensureSchema(databaseId) {
-  const db = await notionFetch(`/databases/${databaseId}`);
+async function ensureSchema(apiKey, databaseId) {
+  const db = await notionFetch(`/databases/${databaseId}`, apiKey);
   const existing = db.properties || {};
   const titleProp = Object.entries(existing).find(([, v]) => v.type === 'title');
   if (!titleProp) throw new Error('Notion database has no title property');
@@ -46,7 +45,7 @@ async function ensureSchema(databaseId) {
     if (!existing[name]) missing[name] = def;
   }
   if (Object.keys(missing).length > 0) {
-    await notionFetch(`/databases/${databaseId}`, {
+    await notionFetch(`/databases/${databaseId}`, apiKey, {
       method: 'PATCH',
       body: JSON.stringify({ properties: missing }),
     });
@@ -54,9 +53,8 @@ async function ensureSchema(databaseId) {
   return titleProp[0];
 }
 
-export async function logRowsToNotion(rows) {
-  const databaseId = process.env.NOTION_DATABASE_ID;
-  const titleName = await ensureSchema(databaseId);
+export async function logRowsToNotion(rows, { apiKey, databaseId }) {
+  const titleName = await ensureSchema(apiKey, databaseId);
 
   const results = [];
   for (const row of rows) {
@@ -84,7 +82,7 @@ export async function logRowsToNotion(rows) {
     if (row.intent) properties['Intent'] = { select: { name: row.intent } };
     if (row.bestUrl) properties['Competitor URL'] = { url: row.bestUrl };
 
-    const page = await notionFetch('/pages', {
+    const page = await notionFetch('/pages', apiKey, {
       method: 'POST',
       body: JSON.stringify({ parent: { database_id: databaseId }, properties }),
     });
