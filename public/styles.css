@@ -202,6 +202,43 @@ body {
   box-shadow: 0 0 0 3px rgba(124, 226, 167, 0.12);
 }
 
+.field span.comp-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0;
+}
+
+.comp-row input { flex: 1; }
+
+.comp-remove {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  width: 30px;
+  height: 34px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.comp-remove:hover { color: var(--red); border-color: var(--red); }
+
+.btn-add {
+  width: 100%;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.8rem;
+  margin-bottom: 0.85rem;
+  color: var(--mint);
+  border-style: dashed;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

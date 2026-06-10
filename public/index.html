@@ -44,21 +44,11 @@
 
         <label class="field">
           <span>Your domain</span>
-          <input type="text" id="yourDomain" placeholder="yourstore.co.uk" required autocomplete="off" />
+          <input type="text" id="yourDomain" value="indexify.co.uk" placeholder="yourstore.co.uk" required autocomplete="off" />
         </label>
 
-        <label class="field">
-          <span>Competitor 1</span>
-          <input type="text" id="comp1" placeholder="competitor.com" required autocomplete="off" />
-        </label>
-        <label class="field">
-          <span>Competitor 2 <small>optional</small></span>
-          <input type="text" id="comp2" autocomplete="off" />
-        </label>
-        <label class="field">
-          <span>Competitor 3 <small>optional</small></span>
-          <input type="text" id="comp3" autocomplete="off" />
-        </label>
+        <div id="competitorList"></div>
+        <button type="button" class="btn btn-ghost btn-add" id="addCompBtn">+ Add competitor</button>
 
         <label class="field">
           <span>Market</span>

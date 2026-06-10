@@ -10,9 +10,50 @@ const state = {
   notionEnabled: false,
 };
 
+const MAX_COMPETITORS = 10;
+const DEFAULT_COMPETITORS = ['edge45.co.uk', 'clickslice.co.uk'];
+
 init();
 
+function competitorInputs() {
+  return [...document.querySelectorAll('#competitorList .comp-input')];
+}
+
+function renumberCompetitors() {
+  const rows = [...document.querySelectorAll('#competitorList .comp-field')];
+  rows.forEach((row, i) => {
+    row.querySelector('span').innerHTML = `Competitor ${i + 1}${i === 0 ? '' : ' <small>optional</small>'}`;
+    row.querySelector('.comp-remove').hidden = rows.length === 1;
+  });
+  $('addCompBtn').hidden = rows.length >= MAX_COMPETITORS;
+}
+
+function addCompetitorRow(value = '', focus = false) {
+  if (competitorInputs().length >= MAX_COMPETITORS) return;
+  const row = document.createElement('label');
+  row.className = 'field comp-field';
+  row.innerHTML = `
+    <span></span>
+    <span class="comp-row">
+      <input type="text" class="comp-input" placeholder="competitor.com" autocomplete="off" />
+      <button type="button" class="comp-remove" title="Remove competitor" aria-label="Remove competitor">&times;</button>
+    </span>`;
+  const input = row.querySelector('input');
+  input.value = value;
+  if (competitorInputs().length === 0) input.required = true;
+  row.querySelector('.comp-remove').addEventListener('click', () => {
+    row.remove();
+    renumberCompetitors();
+  });
+  $('competitorList').appendChild(row);
+  renumberCompetitors();
+  if (focus) input.focus();
+}
+
 async function init() {
+  DEFAULT_COMPETITORS.forEach((domain) => addCompetitorRow(domain));
+  $('addCompBtn').addEventListener('click', () => addCompetitorRow('', true));
+
   try {
     const cfg = await (await fetch('/api/config')).json();
     setChip('chipDfs', 'DataForSEO', cfg.dataForSeo);
@@ -53,7 +94,7 @@ async function onAnalyze(e) {
   e.preventDefault();
   const payload = {
     yourDomain: $('yourDomain').value,
-    competitors: [$('comp1').value, $('comp2').value, $('comp3').value].filter(Boolean),
+    competitors: competitorInputs().map((i) => i.value).filter(Boolean),
     locationName: $('locationName').value,
     languageCode: $('languageCode').value,
     limit: $('limit').value,

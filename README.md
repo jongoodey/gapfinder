@@ -9,7 +9,9 @@ Notion" n8n template, rebuilt as a self-contained web app with no n8n required.
 
 ## How it works
 
-1. Enter your domain and up to three competitors, pick a market and filters.
+1. Enter your domain and competitors (use "+ Add competitor" for up to ten),
+   pick a market and filters. Defaults are prefilled for indexify.co.uk against
+   its two closest SERP competitors.
 2. The server makes one DataForSEO Labs `domain_intersection` call per
    competitor (`intersections: false`, target1 = competitor, target2 = you),
    returning keywords only the competitor ranks for.
@@ -46,10 +48,21 @@ full interface can be explored at no cost.
 
 ## Notion database
 
-Point `NOTION_DATABASE_ID` at any database shared with your integration. On
-first log, the app adds these properties if missing: Search Volume, Difficulty,
-CPC, Opportunity Score, Intent, Competitors, Best Position, Competitor URL,
-Status. The keyword goes into the database's existing title property.
+A "Keyword Gap Opportunities" database already exists in the workspace
+(`NOTION_DATABASE_ID` is set in `.env`) with the full schema: Keyword (title),
+Search Volume, Difficulty, CPC, Opportunity Score, Intent, Competitors, Best
+Position, Competitor URL, Status.
+
+To enable logging from the app:
+
+1. Create an internal integration at https://www.notion.so/my-integrations and
+   paste its secret into `NOTION_API_KEY` in `.env`.
+2. Open the database in Notion, then via the ... menu choose Connections and
+   add your integration. Without this step the API returns "not found".
+3. Restart the app.
+
+The app can also point at any other database; it adds missing properties
+automatically on first log.
 
 ## Costs
 

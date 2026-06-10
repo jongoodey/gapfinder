@@ -33,7 +33,7 @@ app.post('/api/analyze', async (req, res) => {
     const yourDomain = cleanDomain(req.body.yourDomain);
     const competitors = [...new Set((req.body.competitors || []).map(cleanDomain).filter(Boolean))]
       .filter((c) => c !== yourDomain)
-      .slice(0, 3);
+      .slice(0, 10);
     const locationName = req.body.locationName || 'United Kingdom';
     const languageCode = req.body.languageCode || 'en';
     const limit = Math.min(Math.max(parseInt(req.body.limit, 10) || 100, 10), 1000);
