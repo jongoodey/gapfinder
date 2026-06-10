@@ -478,11 +478,12 @@ td.num {
   border-radius: 3px;
 }
 
-.comp-cell { font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
-.comp-cell a { color: var(--mint); text-decoration: none; }
+.comp-cell { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.comp-cell a { color: var(--mint); text-decoration: none; font-family: var(--font-mono); font-size: 0.74rem; }
 .comp-cell a:hover { text-decoration: underline; }
-.comp-pos { font-family: var(--font-mono); color: var(--paper); }
-.comp-more { opacity: 0.7; font-size: 0.75rem; }
+.comp-cell.empty-cell { text-align: center; opacity: 0.4; }
+.comp-pos { font-family: var(--font-mono); color: var(--paper); font-size: 0.78rem; }
+th.comp-col { text-transform: none; letter-spacing: 0.02em; }
 
 /* ---------- States ---------- */
 

@@ -8,6 +8,7 @@ const state = {
   sortDir: 'desc',
   demo: false,
   cfg: { dataForSeo: false, notion: false },
+  competitorDomains: [],
 };
 
 const KEYS_STORAGE = 'gapfinder.keys';
@@ -205,6 +206,8 @@ async function onAnalyze(e) {
     state.rows = data.rows;
     state.demo = data.demo;
     state.selected = new Set();
+    state.competitorDomains = data.competitors;
+    renderCompetitorHeaders();
     $('resultsTitle').textContent = `${data.rows.length} opportunities`;
     $('resultsSub').textContent =
       `${data.yourDomain} vs ${data.competitors.join(', ')}: keywords they rank for that you don't`;
@@ -238,6 +241,31 @@ function applyFilters() {
   });
 }
 
+// One column per competitor in the current analysis, linking to their ranking URL.
+function renderCompetitorHeaders() {
+  document.querySelectorAll('th.comp-col').forEach((th) => th.remove());
+  const headRow = document.querySelector('#resultsTable thead tr');
+  for (const domain of state.competitorDomains) {
+    const th = document.createElement('th');
+    th.className = 'comp-col';
+    th.textContent = domain;
+    headRow.appendChild(th);
+  }
+}
+
+function competitorCell(row, domain) {
+  const c = (row.competitors || []).find((x) => x.domain === domain);
+  if (!c || !c.url) return '<td class="comp-cell empty-cell">—</td>';
+  let path;
+  try {
+    path = new URL(c.url).pathname || '/';
+  } catch {
+    path = c.url;
+  }
+  if (path.length > 30) path = path.slice(0, 29) + '…';
+  return `<td class="comp-cell">${c.position != null ? `<span class="comp-pos">#${c.position}</span> ` : ''}<a href="${escapeAttr(c.url)}" target="_blank" rel="noopener" title="${escapeAttr(c.url)}">${escapeHtml(path)}</a></td>`;
+}
+
 function render() {
   applyFilters();
 
@@ -254,7 +282,6 @@ function render() {
     const tr = document.createElement('tr');
     const checked = state.selected.has(row.keyword);
     tr.className = checked ? 'selected' : '';
-    const others = row.competitors.length - 1;
     tr.innerHTML = `
       <td class="col-check"><input type="checkbox" ${checked ? 'checked' : ''} data-kw="${escapeAttr(row.keyword)}"></td>
       <td><span class="kw">${escapeHtml(row.keyword)}</span>${row.intent ? `<span class="chip ${row.intent}">${row.intent.slice(0, 5)}</span>` : ''}</td>
@@ -262,11 +289,7 @@ function render() {
       <td class="num">${kdPill(row.difficulty)}</td>
       <td class="num">${row.cpc != null ? '$' + row.cpc.toFixed(2) : '—'}</td>
       <td class="num"><span class="opp"><span class="opp-bar"><i style="width:${Math.round(((row.opportunityScore || 0) / maxOpp) * 100)}%"></i></span>${fmt(row.opportunityScore)}</span></td>
-      <td class="comp-cell">
-        ${row.bestUrl ? `<a href="${escapeAttr(row.bestUrl)}" target="_blank" rel="noopener">${escapeHtml(row.bestCompetitor || '')}</a>` : escapeHtml(row.bestCompetitor || '—')}
-        ${row.bestPosition ? `<span class="comp-pos">#${row.bestPosition}</span>` : ''}
-        ${others > 0 ? `<span class="comp-more">+${others} more</span>` : ''}
-      </td>`;
+      ${state.competitorDomains.map((domain) => competitorCell(row, domain)).join('')}`;
     tr.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
       e.target.checked ? state.selected.add(row.keyword) : state.selected.delete(row.keyword);
       tr.classList.toggle('selected', e.target.checked);
@@ -296,13 +319,21 @@ function selectedRows() {
 function exportCsv() {
   const rows = state.selected.size > 0 ? selectedRows() : state.filtered;
   if (rows.length === 0) return toast('Nothing to export', true);
-  const header = ['Keyword', 'Search Volume', 'Difficulty', 'CPC', 'Intent', 'Opportunity Score', 'Best Competitor', 'Best Position', 'Competitor URL', 'All Competitors'];
+  const header = [
+    'Keyword', 'Search Volume', 'Difficulty', 'CPC', 'Intent', 'Opportunity Score',
+    'Best Competitor', 'Best Position',
+    ...state.competitorDomains.flatMap((d) => [`${d} Position`, `${d} URL`]),
+  ];
   const lines = [header.join(',')];
   for (const r of rows) {
+    const perCompetitor = state.competitorDomains.flatMap((domain) => {
+      const c = (r.competitors || []).find((x) => x.domain === domain);
+      return [c?.position ?? '', csv(c?.url || '')];
+    });
     lines.push([
       csv(r.keyword), r.searchVolume ?? '', r.difficulty ?? '', r.cpc ?? '', csv(r.intent || ''),
-      r.opportunityScore ?? '', csv(r.bestCompetitor || ''), r.bestPosition ?? '', csv(r.bestUrl || ''),
-      csv(r.competitors.map((c) => `${c.domain}${c.position ? ` (#${c.position})` : ''}`).join('; ')),
+      r.opportunityScore ?? '', csv(r.bestCompetitor || ''), r.bestPosition ?? '',
+      ...perCompetitor,
     ].join(','));
   }
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
